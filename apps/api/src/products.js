@@ -30,7 +30,7 @@ export function requirePriceCents(payload) {
 }
 
 export function unitPriceCents(product) {
-  return product.priceCents ?? priceToCents(product.price);
+  return product.priceCents;
 }
 
 export function productResponse(product) {

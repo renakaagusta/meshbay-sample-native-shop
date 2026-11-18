@@ -22,5 +22,5 @@ test("centsToPrice renders two decimals", () => {
 });
 
 test("productPriceColumns answers the price contract of the current migration step", () => {
-  assert.deepEqual(productPriceColumns(1250), { priceCents: 1250, price: "12.50" });
+  assert.deepEqual(productPriceColumns(1250), { priceCents: 1250 });
 });

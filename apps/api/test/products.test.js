@@ -29,8 +29,8 @@ test("requirePriceCents accepts priceCents and a decimal price", () => {
   assert.throws(() => requirePriceCents({}), HttpError);
 });
 
-test("unitPriceCents reads the cents column and falls back to the decimal price", () => {
-  assert.equal(unitPriceCents({ price: "12.5" }), 1250);
+test("unitPriceCents reads the cents column", () => {
+  assert.equal(unitPriceCents({ priceCents: 1250 }), 1250);
 });
 
 test("productResponse exposes cents and the decimal price together", () => {
@@ -38,7 +38,7 @@ test("productResponse exposes cents and the decimal price together", () => {
     id: 3,
     sku: "kopi-gayo-1kg",
     name: "Kopi Gayo 1kg",
-    price: "125.00",
+    priceCents: 12500,
     createdAt: "2026-11-18T00:00:00.000Z",
     updatedAt: "2026-11-18T00:00:00.000Z",
   });

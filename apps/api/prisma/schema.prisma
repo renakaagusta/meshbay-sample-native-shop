@@ -31,8 +31,7 @@ model Product {
   id        Int      @id @default(autoincrement())
   sku       String   @unique
   name       String
-  price      Decimal  @database.Decimal(12, 2)
-  priceCents Int?     @map("price_cents")
+  priceCents Int      @map("price_cents")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

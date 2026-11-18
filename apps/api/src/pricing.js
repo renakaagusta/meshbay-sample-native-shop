@@ -13,5 +13,5 @@ export function centsToPrice(priceCents) {
 }
 
 export function productPriceColumns(priceCents) {
-  return { priceCents, price: centsToPrice(priceCents) };
+  return { priceCents };
 }
