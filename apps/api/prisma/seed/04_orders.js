@@ -1,5 +1,6 @@
 import { unitPriceCents } from "../../src/products.js";
 
+import { productRows } from "./03_products.js";
 import { isStagingProfile } from "./profiles.js";
 import { synchroniseRows } from "./upsert.js";
 
@@ -30,7 +31,11 @@ export async function seedOrders({ database, profile }) {
     console.log("seed: orders upserted=0 unchanged=0 (production profile: demo orders are staging only)");
     return { upserted: 0, unchanged: 0 };
   }
-  const products = await database.product.findMany({ orderBy: { sku: "asc" } });
+  const seededSkus = productRows().map((productRow) => productRow.sku).sort();
+  const products = await database.product.findMany({
+    where: { sku: { in: seededSkus } },
+    orderBy: { sku: "asc" },
+  });
   if (products.length === 0) {
     throw new Error("seed: orders need seeded products");
   }
