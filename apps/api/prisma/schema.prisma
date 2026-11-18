@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource database {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Plan {
+  id         Int      @id @default(autoincrement())
+  code       String   @unique
+  name       String
+  priceCents Int      @map("price_cents")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("plans")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  role      String   @default("customer")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  sku       String   @unique
+  name      String
+  price     Decimal  @database.Decimal(12, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@map("products")
+}
+
+model Order {
+  id         Int       @id @default(autoincrement())
+  reference  String    @unique
+  productId  Int       @map("product_id")
+  quantity   Int
+  status     String    @default("pending")
+  totalCents Int       @map("total_cents")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  paidAt     DateTime? @map("paid_at")
+
+  product Product      @relation(fields: [productId], references: [id])
+  audit   OrderAudit[]
+
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderAudit {
+  id        Int      @id @default(autoincrement())
+  orderId   Int      @map("order_id")
+  action    String
+  detail    Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@map("order_audit")
+}
+
+model DailySale {
+  day          DateTime @id @database.Date
+  orders       Int      @default(0)
+  revenueCents Int      @default(0) @map("revenue_cents")
+  updatedAt    DateTime @default(now()) @map("updated_at")
+
+  @@map("daily_sales")
+}

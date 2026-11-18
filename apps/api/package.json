@@ -1,0 +1,24 @@
+{
+  "name": "meshbay-sample-native-shop-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "description": "Meshbay fixture api: HTTP over products and orders, Prisma migrations and seeders run as the pre-deploy command",
+  "scripts": {
+    "start": "node src/server.js",
+    "migrate": "node prisma/run-migrations.js",
+    "seed": "node prisma/seed/index.js",
+    "check": "node --check src/server.js && node --check prisma/run-migrations.js && node --check prisma/seed/index.js",
+    "test": "node --test",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "bullmq": "6.7.7",
+    "ioredis": "6.0.0",
+    "prisma": "6.19.3"
+  }
+}

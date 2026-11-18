@@ -1,0 +1,18 @@
+{
+  "name": "meshbay-sample-native-shop-cron",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "description": "Meshbay fixture cron: one-shot daily_sales rollup over paid orders, then exit 0",
+  "scripts": {
+    "start": "node index.js",
+    "check": "node --check index.js && node --check src/rollup.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "pg": "8.23.1"
+  }
+}
