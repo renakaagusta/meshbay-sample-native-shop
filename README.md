@@ -208,13 +208,19 @@ migration and a seeder log where every step reports `upserted=0`.
 
 ### 1. Expand, backfill, contract: `price` → `price_cents`
 
-Deploy the three commits in order, each one as its own Meshbay deploy of the api service:
+Deploy the three commits in order, each one as its own Meshbay deploy of the api service: point the
+service at the commit (branch `main`, then pick the commit or paste its SHA) and let the pre-deploy run
+before moving to the next row.
 
 | Step | Commit | Migration applied | What the api does |
 |---|---|---|---|
-| 1 | __SHA_001__ | `001_init` | writes `products.price`, reads it back, reports both `price` and `priceCents` |
-| 2 | __SHA_002__ | `002_expand_price_cents` | writes both columns, reads `price_cents` and falls back to `price` |
-| 3 | __SHA_003__ | `003_contract_price` | writes and reads `price_cents` only; `price` is gone |
+| 1 | `9e0d9c620011a03876bf2957d8edf6128f78ebf2` | `001_init` | writes `products.price`, reads it back, reports both `price` and `priceCents` |
+| 2 | `b63689d4c6aaabf5a609c309d1b54c8381a3c7e2` | `002_expand_price_cents` | writes both columns, reads `price_cents` and falls back to `price` |
+| 3 | `75522f9f739f0a2de3a6bae73c4f5bc42a244ce8` | `003_contract_price` | writes and reads `price_cents` only; `price` is gone |
+
+The remaining commits are additive and can be deployed in any order after those three:
+`b75380b989778410cebc571e7d0efd86c70b2173` pins the staging demo orders to the seeded products and
+`be80cbbad38522a7384ccb3a29fec540edf15b87` adds `004_add_order_status_check` (scenario 2).
 
 Each step is a deploy that also runs the seeder, so the products are re-upserted against the new column
 right after the migration. Between step 1 and step 3 the same endpoint contract keeps working:
@@ -255,13 +261,32 @@ The migration itself stays valid: it only runs when the variable is absent.
 3. Set `SEED_PROFILE=staging` and deploy: the users step reports `upserted=2` and the orders step
    `upserted=50` the first time, then everything reports unchanged.
 
-### 4. Pre-deploy only on the api, cron on its own schedule
+### 4. Pre-deploy only on the api
 
 1. Deploy the worker: its log has no migration and no seed output, only `worker started`.
-2. Deploy the cron: nothing runs until the schedule fires.
+2. Deploy the cron: nothing runs at build or pre-deploy time.
 3. Wait for `*/5 * * * *` (or trigger the cron job from the dashboard) and read the log:
    `daily_sales rollup written` with the day, the number of paid orders and the revenue in cents, then
    exit code 0. The `daily_sales` row is upserted, so running it twice on the same day keeps one row.
+
+### 5. Variable references
+
+1. The api and the worker carry exactly two variables: `DATABASE_URL=${{postgres.DATABASE_URL}}` and
+   `REDIS_URL=${{redis.REDIS_URL}}`, so a rotated database or Redis credential reaches both without
+   pasting a connection string anywhere.
+2. The cron carries `DATABASE_URL` only. Remove `REDIS_URL` from it if it is there: the cron keeps
+   working, because it never creates a Redis client.
+3. Break the reference on purpose (point `REDIS_URL` of the api at a wrong port) and deploy: `GET /health`
+   answers `503` with `{"status":"error","database":"ok","redis":"error"}`. Restore the reference,
+   redeploy, and `/health` is `200` again.
+
+### 6. Root directory per service
+
+1. Each service has its own Root directory (`apps/api`, `apps/worker`, `apps/cron`), so its build log
+   installs only that folder's dependencies and its lockfile — never the other two services.
+2. Leave the Root directory empty on a fourth service built from this repository and the build fails
+   immediately: the repository root has no `package.json`, because the three apps share nothing.
+3. Only `apps/api` has a pre-deploy command, so the worker and the cron can never migrate or seed.
 
 ## Local proof
 
