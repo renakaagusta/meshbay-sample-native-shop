@@ -31,6 +31,11 @@ imports code from a sibling folder.
 
 ## Dashboard setup (replaces meshbay.toml)
 
+Meshbay prefixes every service with the project name. In a project named `native-shop` the services are
+`native-shop` (the first repo service, `apps/api`), `native-shop-worker`, `native-shop-cron`,
+`native-shop-postgres` and `native-shop-redis`, and a variable reference names the full service:
+`${{native-shop-postgres.DATABASE_URL}}`. Below, `<project>` stands for your project name.
+
 Create one project, add a **Postgres** database and a **Redis** database to it, then create the three
 services from the same repository, one per folder.
 
@@ -43,7 +48,7 @@ services from the same repository, one per folder.
 | Build command | empty — Railpack detects the Node builder |
 | Start command | `npm start` → `node src/server.js` (detected) |
 | **Pre-deploy command** | `node prisma/run-migrations.js && node prisma/seed/index.js` |
-| Variables | `DATABASE_URL=${{postgres.DATABASE_URL}}`, `REDIS_URL=${{redis.REDIS_URL}}` |
+| Variables | `DATABASE_URL=${{<project>-postgres.DATABASE_URL}}`, `REDIS_URL=${{<project>-redis.REDIS_URL}}` |
 | Public networking | **on** |
 | Cron schedule | none |
 
@@ -56,7 +61,7 @@ services from the same repository, one per folder.
 | Build command | empty — Railpack detects the Node builder |
 | Start command | `node index.js` |
 | **Pre-deploy command** | none — the worker never migrates |
-| Variables | `DATABASE_URL=${{postgres.DATABASE_URL}}`, `REDIS_URL=${{redis.REDIS_URL}}` |
+| Variables | `DATABASE_URL=${{<project>-postgres.DATABASE_URL}}`, `REDIS_URL=${{<project>-redis.REDIS_URL}}` |
 | Public networking | **off** (no HTTP port; it only consumes the BullMQ queue) |
 | Cron schedule | none |
 
@@ -69,7 +74,7 @@ services from the same repository, one per folder.
 | Build command | empty — Railpack detects the Node builder |
 | Start command | not used for the schedule; Meshbay runs the cron command |
 | **Pre-deploy command** | none |
-| Variables | `DATABASE_URL=${{postgres.DATABASE_URL}}` only — the cron has no Redis client |
+| Variables | `DATABASE_URL=${{<project>-postgres.DATABASE_URL}}` only — the cron has no Redis client |
 | Public networking | **off** |
 | **Cron schedule** | `*/5 * * * *`, command `node index.js` |
 
@@ -143,8 +148,8 @@ the row to `paid`, sets `paid_at` and inserts an `order_audit` row with the refe
 
 | Variable | Used by | Required | Description |
 |---|---|---|---|
-| `DATABASE_URL` | api, worker, cron, pre-deploy | yes | Postgres URL; in Meshbay `${{postgres.DATABASE_URL}}` |
-| `REDIS_URL` | api, worker | yes | Redis URL; in Meshbay `${{redis.REDIS_URL}}` |
+| `DATABASE_URL` | api, worker, cron, pre-deploy | yes | Postgres URL; in Meshbay `${{<project>-postgres.DATABASE_URL}}` |
+| `REDIS_URL` | api, worker | yes | Redis URL; in Meshbay `${{<project>-redis.REDIS_URL}}` |
 | `PORT` | api | no | Injected by Meshbay when public networking is on; defaults to `8080` |
 | `SEED_PROFILE` | api pre-deploy | no | `production` (default: plans and products) or `staging` (also demo users and 50 orders) |
 | `FAIL_MIGRATION` | api pre-deploy | no | `4` makes the pre-deploy fail on purpose before `prisma migrate deploy` |
@@ -271,8 +276,8 @@ The migration itself stays valid: it only runs when the variable is absent.
 
 ### 5. Variable references
 
-1. The api and the worker carry exactly two variables: `DATABASE_URL=${{postgres.DATABASE_URL}}` and
-   `REDIS_URL=${{redis.REDIS_URL}}`, so a rotated database or Redis credential reaches both without
+1. The api and the worker carry exactly two variables: `DATABASE_URL=${{<project>-postgres.DATABASE_URL}}` and
+   `REDIS_URL=${{<project>-redis.REDIS_URL}}`, so a rotated database or Redis credential reaches both without
    pasting a connection string anywhere.
 2. The cron carries `DATABASE_URL` only. Remove `REDIS_URL` from it if it is there: the cron keeps
    working, because it never creates a Redis client.
